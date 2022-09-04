@@ -1,0 +1,16 @@
+# Model Saves
+*.pth.tar
+
+# Wandb directory
+wandb/*
+
+# Python 
+venv/*
+
+*/__pycache__/*
+
+# Vscode
+.vscode/*
+
+# Data 
+data/*

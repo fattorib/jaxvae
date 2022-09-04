@@ -1,0 +1,3 @@
+# jaxVAE
+
+VAE in Jax
