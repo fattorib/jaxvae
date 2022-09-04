@@ -1,5 +1,7 @@
 import jax.numpy as jnp
 import flax 
+from optax import sigmoid_binary_cross_entropy
+
 
 def create_cos_anneal_schedule(base_lr, min_lr, max_steps):
     def learning_rate_fn(step):
@@ -9,23 +11,18 @@ def create_cos_anneal_schedule(base_lr, min_lr, max_steps):
 
     return learning_rate_fn
 
+def lognormal_pdf(sample, mean, logvar):
+    log2pi = jnp.log(2. * jnp .pi)
+    return jnp.sum(
+      -.5 * ((sample - mean) ** 2. * jnp.exp(-logvar) + logvar + log2pi),
+      axis=1)
 
-def compute_weight_decay(params):
-    """Given a pytree of params, compute the summed $L2$ norm of the params.
-    
-    NOTE: For our case with SGD, weight decay ~ L2 regularization. This won't always be the 
-    case (ex: Adam vs. AdamW).
-    """
-    param_norm = 0
 
-    weight_decay_params_filter = flax.traverse_util.ModelParamTraversal(
-        lambda path, _: ("bias" not in path and "scale" not in path)
-    )
+def vae_loss(logits, x, z, mu, var):
+    px_z_loss = sigmoid_binary_cross_entropy(logits,x)
 
-    weight_decay_params = weight_decay_params_filter.iterate(params)
+    pz_loss = lognormal_pdf(z,0,0)
 
-    for p in weight_decay_params:
-        if p.ndim > 1:
-            param_norm += jnp.sum(p ** 2)
+    qz_x_loss = lognormal_pdf(z,mu,var)
 
-    return param_norm
+    return -(px_z_loss + pz_loss - qz_x_loss).mean()
