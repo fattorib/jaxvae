@@ -1,4 +1,3 @@
-from this import d
 import numpy as np
 import optax
 import functools
@@ -25,6 +24,7 @@ import argparse
 import logging 
 from omegaconf import OmegaConf
 from aim import Run
+from tqdm import tqdm 
 
 logging.basicConfig(level=logging.INFO)
 
@@ -67,7 +67,7 @@ def main():
     run = Run()
 
     run["hparams"] = {
-        "learning_rate": cfg.training.lr,
+        "learning_rate": cfg.training.learning_rate,
         "batch_size": cfg.training.batch_size,
         "latent_dimension": cfg.model.latent_dim,
     }
@@ -80,14 +80,14 @@ def main():
 
     state = create_train_state(
         init_rng,
-        learning_rate_fn=3e-4,
-        weight_decay=args.weight_decay,
+        learning_rate_fn=cfg.training.learning_rate,
+        weight_decay=cfg.training.weight_decay,
         model=model,
     )
     
     del init_rng 
 
-    for epoch in range(0, cfg.training.epochs):
+    for epoch in tqdm(range(0, cfg.training.epochs)):
         rng, subrng = jax.random.split(rng)
         state, epoch_metrics_np = train_epoch(
             state, subrng, train_loader
@@ -110,7 +110,7 @@ def create_train_state(rng, learning_rate_fn, weight_decay, model):
     """Creates initial `TrainState`."""
     params = initialized(rng, 28, model)
     mask = jax.tree_map(lambda x: x.ndim != 1, params)
-    tx = optax.adamw(learning_rate=learning_rate_fn, weight_decay=weight_decay)
+    tx = optax.adamw(learning_rate=learning_rate_fn, weight_decay=weight_decay, mask = mask)
     state = train_state.TrainState.create(
         apply_fn=model.apply,
         params=params,
@@ -153,7 +153,7 @@ def train_epoch(state, rng, dataloader):
     """Train for a single epoch."""
     batch_metrics = []
 
-    for batch, _ in dataloader:
+    for i, (batch, _) in tqdm(enumerate(dataloader)):
         new_rng, subrng = random.split(rng)
         state, metrics = train_step(
             state,
