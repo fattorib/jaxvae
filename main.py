@@ -15,6 +15,7 @@ import jax
 # PyTorch - for dataloading
 import torchvision.transforms as transforms
 from torchvision.datasets import MNIST
+from src.utils.dataloader import * 
 
 # Logging/Config Stuffs
 import argparse
@@ -37,6 +38,30 @@ def main():
     args = parse()
     cfg = OmegaConf.load(args.cfg)
 
+    transform_train = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            FlattenAndCast(),
+        ]
+    )
+
+    train_dataset = MNIST(
+        root=f"data/MNIST",
+        train=True,
+        download=True,
+        transform=transform_train,
+    )
+
+    train_loader = NumpyLoader(
+        train_dataset,
+        batch_size=cfg.training.batch_size,
+        shuffle=True,
+        num_workers=cfg.training.workers,
+        pin_memory=False,
+    )
+
+class TrainState(train_state.TrainState):
+    weight_decay: Any = None
 
 
 if __name__ == '__main__':
