@@ -1,3 +1,4 @@
+from this import d
 import numpy as np
 import optax
 import functools
@@ -13,6 +14,9 @@ import jax
 import torchvision.transforms as transforms
 from torchvision.datasets import MNIST
 from src.utils.dataloader import * 
+
+# Model imports 
+from src.models.VAE import VAE
 
 from src.training.train_utils import *
 
@@ -72,15 +76,24 @@ def main():
     rng = jax.random.PRNGKey(0)
     rng, init_rng = jax.random.split(rng)
 
-    model = XYZ 
-    learning_rate_fn = XYZ
+    model = VAE(num_latents=cfg.model.latent_dim)
 
     state = create_train_state(
         init_rng,
-        learning_rate_fn=learning_rate_fn,
+        learning_rate_fn=3e-4,
         weight_decay=args.weight_decay,
         model=model,
     )
+    
+    del init_rng 
+
+    for epoch in range(0, cfg.training.epochs):
+        rng, subrng = jax.random.split(rng)
+        state, epoch_metrics_np = train_epoch(
+            state, subrng, train_loader
+        )
+
+        run.track(epoch_metrics_np["VAE Loss"], name='loss', step=epoch, context={ "subset":"train" })
 
 def initialized(key, image_size, model):
     input_shape = (1, image_size, image_size, 1)
@@ -107,7 +120,7 @@ def create_train_state(rng, learning_rate_fn, weight_decay, model):
 
 
 @jax.jit
-def train_step(state, batch, rng_key, labels):
+def train_step(state, batch, rng_key):
     """Train for a single step."""
 
     def loss_fn(params):
@@ -116,13 +129,11 @@ def train_step(state, batch, rng_key, labels):
             batch,
             rng_key,
             None
-
         )
 
         logits, extra = out 
         z, mu, var = extra 
         loss = vae_loss(logits=logits, x = batch, z=z, mu= mu, var=var)
-
 
         return loss, (logits, new_state)
 
@@ -137,6 +148,27 @@ def train_step(state, batch, rng_key, labels):
     metrics = {"VAE Loss": loss}
 
     return state, metrics
+
+def train_epoch(state, rng, dataloader):
+    """Train for a single epoch."""
+    batch_metrics = []
+
+    for batch, _ in dataloader:
+        new_rng, subrng = random.split(rng)
+        state, metrics = train_step(
+            state,
+            batch,
+            subrng,
+        )
+        batch_metrics.append(metrics)
+        rng = new_rng
+
+    batch_metrics_np = jax.device_get(batch_metrics)
+    epoch_metrics_np = {
+        k: np.mean([metrics[k] for metrics in batch_metrics_np])
+        for k in batch_metrics_np[0]
+    }
+    return state, epoch_metrics_np
 
 
 if __name__ == '__main__':

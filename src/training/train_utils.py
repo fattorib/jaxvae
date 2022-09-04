@@ -1,5 +1,5 @@
 import jax.numpy as jnp
-import flax 
+import jax 
 from optax import sigmoid_binary_cross_entropy
 
 
@@ -11,13 +11,14 @@ def create_cos_anneal_schedule(base_lr, min_lr, max_steps):
 
     return learning_rate_fn
 
+@jax.jit
 def lognormal_pdf(sample, mean, logvar):
     log2pi = jnp.log(2. * jnp .pi)
     return jnp.sum(
       -.5 * ((sample - mean) ** 2. * jnp.exp(-logvar) + logvar + log2pi),
       axis=1)
 
-
+@jax.jit
 def vae_loss(logits, x, z, mu, var):
     px_z_loss = sigmoid_binary_cross_entropy(logits,x)
 
