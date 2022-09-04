@@ -1,18 +1,18 @@
-from typing import Any, Callable, Sequence
+from typing import Any
 from jax import numpy as jnp
 from flax import linen as nn
-from functools import partial
 
 ModuleDef = Any
 dtypedef = Any
 
 class VAE(nn.Module):
 
-    """Convolutional Variational Autoencoder as described in PAPER
-
-    Model configuration taken from https://www.tensorflow.org/tutorials/generative/cvae
+    """Convolutional Variational Autoencoder as described in `Convolutional Variational Autoencoder`
+        <https://www.tensorflow.org/tutorials/generative/cvae>
     """
     num_latents: int = 5
+
+    #TODO: UNUSED
     dtype: dtypedef = jnp.float32
     
     # # define init for conv layers. Do we need this?
