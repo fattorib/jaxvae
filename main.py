@@ -100,7 +100,7 @@ def initialized(key, image_size, model):
 
     @jax.jit
     def init(rng, shape):
-        return model.init(rng, shape)
+        return model.init(rng, shape, rng)
 
     variables = init(rng=key, shape=jnp.ones(input_shape))
     return variables["params"]
@@ -124,26 +124,22 @@ def train_step(state, batch, rng_key):
     """Train for a single step."""
 
     def loss_fn(params):
-        out, new_state = state.apply_fn(
+        logits, z, mu, var = state.apply_fn(
             {"params": params},
             batch,
             rng_key,
             None
         )
-
-        logits, extra = out 
-        z, mu, var = extra 
         loss = vae_loss(logits=logits, x = batch, z=z, mu= mu, var=var)
 
-        return loss, (logits, new_state)
+        return loss
 
-    grad_fn = jax.value_and_grad(loss_fn, has_aux=True)
+    grad_fn = jax.value_and_grad(loss_fn, has_aux=False)
     loss, grads = grad_fn(state.params)
 
     state = state.apply_gradients(
         grads=grads,
     )
-
     # NEED TO LOG PARAMS TOO
     metrics = {"VAE Loss": loss}
 
@@ -153,7 +149,7 @@ def train_epoch(state, rng, dataloader):
     """Train for a single epoch."""
     batch_metrics = []
 
-    for i, (batch, _) in tqdm(enumerate(dataloader)):
+    for i, (batch, _) in tqdm(enumerate(dataloader), total = len(dataloader)):
         new_rng, subrng = random.split(rng)
         state, metrics = train_step(
             state,
