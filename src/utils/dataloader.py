@@ -1,5 +1,7 @@
 """ 
 Class + helper methods for interfacing with PyTorch dataloaders
+
+Taken/modified from https://jax.readthedocs.io/en/latest/notebooks/Neural_Network_and_Data_Loading.html
 """
 
 from torch.utils import data
