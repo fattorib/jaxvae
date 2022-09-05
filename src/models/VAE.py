@@ -47,32 +47,6 @@ class Encoder(nn.Module):
         return z
 
 
-# class Decoder(nn.Module):
-
-
-#     @nn.compact
-#     def __call__(self,z, rng_key):
-#         mu, logvar = jnp.split(z, indices_or_sections=2, axis = -1)
-#         eps = jax.random.normal(key = rng_key, shape = logvar.shape)
-#         z = mu + eps*jnp.exp(0.5 * logvar)
-#         # decoder: learning $p_\theta (x|z)$ where z is a latent and x is a generated sample
-#         z = nn.Dense(features = 500, name='fc1')(z)
-
-#         z = nn.relu(z)
-#         out = nn.Dense(784, name='fc2')(z)
-
-#         return (out, mu, logvar)
-
-# class Encoder(nn.Module):
-#     num_latents: int = 5
-
-#     @nn.compact
-#     def __call__(self,x):
-#         x = nn.Dense(500, name='fc1')(x)
-#         x = nn.relu(x)
-#         z = nn.Dense(features= 2 * self.num_latents)(x)
-#         return z
-
 
 class VAE(nn.Module):
 

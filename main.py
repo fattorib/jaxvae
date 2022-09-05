@@ -88,6 +88,7 @@ def main():
         "learning_rate": cfg.training.learning_rate,
         "batch_size": cfg.training.batch_size,
         "latent_dimension": cfg.model.latent_dim,
+        "gradient_accumulation_steps": cfg.training.gradient_accumulation_steps
     }
 
     # --------- Create Train State ---------#
@@ -101,6 +102,7 @@ def main():
         learning_rate_fn=cfg.training.learning_rate,
         weight_decay=cfg.training.weight_decay,
         model=model,
+        grad_accum_steps = cfg.training.gradient_accumulation_steps
     )
 
     del init_rng
@@ -119,6 +121,7 @@ def main():
 
         rng = subrng
 
+        # Logging to Aim
         original, reconstructed = np_to_fig(
             jax.device_get(original).reshape(-1, 28, 28)
         ), np_to_fig(jax.device_get(reconstructed).reshape(-1, 28, 28))
@@ -134,7 +137,7 @@ def main():
         )
 
         run.track(
-            aim_image, name="images", step=epoch, context={"subset": "train"}
+            aim_image, name="Latent Generations", step=epoch, context={"subset": "train"}
         )
         run.track(
             aim_original,
@@ -199,13 +202,17 @@ def initialized(key, image_size, model):
     return variables
 
 
-def create_train_state(rng, learning_rate_fn, weight_decay, model):
+def create_train_state(rng, learning_rate_fn, weight_decay, model, grad_accum_steps):
     """Creates initial `TrainState`."""
     params = initialized(rng, 28, model)
     mask = jax.tree_map(lambda x: x.ndim != 1, params)
     tx = optax.adamw(
         learning_rate=learning_rate_fn, weight_decay=weight_decay, mask=mask
     )
+
+    if grad_accum_steps > 1:
+        tx = optax.MultiSteps(tx, every_k_schedule=grad_accum_steps)
+
     state = train_state.TrainState.create(
         apply_fn=model.apply,
         params=params,
@@ -225,26 +232,16 @@ def train_step(state, batch, rng_key):
             rng_key,
         )
         loss = vae_loss(logits=logits, x=batch, mean=mean, logvar=logvar)
+        prior_loss = kl_divergence(mean, logvar)
 
-        return loss
+        return loss, prior_loss
 
-    grad_fn = jax.value_and_grad(loss_fn, has_aux=False)
-    loss, grads = grad_fn(state.params)
+    grad_fn = jax.value_and_grad(loss_fn, has_aux=True)
+    (loss, prior_loss), grads = grad_fn(state.params)
 
     state = state.apply_gradients(
         grads=grads,
     )
-
-    # NEED TO LOG PARAMS TOO
-    # TODO: Not a shitty way to log this
-
-    _, mean, logvar = state.apply_fn(
-        {"params": state.params["params"]},
-        batch,
-        rng_key,
-    )
-
-    prior_loss = kl_divergence(mean, logvar)
 
     metrics = {
         "VAE Loss": loss,
