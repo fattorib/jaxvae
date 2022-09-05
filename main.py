@@ -88,7 +88,6 @@ def main():
         "batch_size": cfg.training.batch_size,
         "latent_dimension": cfg.model.latent_dim,
         "gradient_accumulation_steps": cfg.training.gradient_accumulation_steps,
-        "dataset": cfg.dataset
     }
 
     # --------- Create Train State ---------#
