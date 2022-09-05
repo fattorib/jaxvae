@@ -1,9 +1,9 @@
 model:
-  latent_dim: 5
+  latent_dim: 2
 
 training:
-  learning_rate: 3e-4
-  batch_size: 32
+  learning_rate: 1e-3
+  batch_size: 16
   epochs: 10
   workers: 4
-  weight_decay: 1e-2
+  weight_decay: 0.0001

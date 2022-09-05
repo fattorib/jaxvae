@@ -45,5 +45,7 @@ class NumpyLoader(data.DataLoader):
 
 class FlattenAndCast(object):
     def __call__(self, pic):
-        return np.array(pic.permute(1, 2, 0), dtype=jnp.float32)
+        pic = np.array(pic.permute(1, 2, 0), dtype=jnp.float32)
+        return np.where(pic> .5, 1.0, 0.0).astype('float32')
+
 

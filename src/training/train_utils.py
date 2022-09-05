@@ -11,16 +11,16 @@ def create_cos_anneal_schedule(base_lr, min_lr, max_steps):
 
     return learning_rate_fn
 
-@jax.jit
-def lognormal_pdf(sample, mean, logvar):
-    return jnp.sum(norm.logpdf(sample, mean, jnp.exp(logvar)), axis=-1)
+
+@jax.vmap
+def kl_divergence(mean, logvar):
+  return -0.5 * jnp.sum(1 + logvar - jnp.square(mean) - jnp.exp(logvar))
 
 @jax.jit
-def vae_loss(logits, x, z, mu, var):
-    px_z_loss = -sigmoid_binary_cross_entropy(logits,x).sum(axis = [1,2,3])
+def vae_loss(logits, x, mean, logvar):
+    px_z_loss = sigmoid_binary_cross_entropy(logits,x)
 
-    pz_loss = lognormal_pdf(z,0,0)
+    kl_loss = kl_divergence(mean, logvar)
 
-    qz_x_loss = lognormal_pdf(z,mu,var)
+    return (px_z_loss + kl_loss).mean()
 
-    return -(px_z_loss + pz_loss - qz_x_loss).mean()
