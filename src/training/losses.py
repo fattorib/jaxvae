@@ -2,6 +2,7 @@ import jax.numpy as jnp
 import jax
 import flax.linen as nn
 
+
 @jax.vmap
 def kl_divergence(mean: jnp.array, logvar: jnp.array) -> jnp.array:
     """KL Divergence for standard normal prior
@@ -17,8 +18,10 @@ def kl_divergence(mean: jnp.array, logvar: jnp.array) -> jnp.array:
 
 
 @jax.jit
-def vae_loss(logits: jnp.array, x: jnp.array, mean: jnp.array, logvar:jnp.array) -> jnp.array:
-    """VAE loss function. Sum of 
+def vae_loss(
+    logits: jnp.array, x: jnp.array, mean: jnp.array, logvar: jnp.array
+) -> jnp.array:
+    """VAE loss function. Sum of
         -'reconstruction' loss
         -'prior-matching' loss
 

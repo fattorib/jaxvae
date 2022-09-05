@@ -1,10 +1,11 @@
 """ 
 Helper methods used during training setup. 
 """
-import jax 
+import jax
 import jax.numpy as jnp
 import optax
 from flax.training import train_state
+
 
 def initialized(key, image_size, model):
     """Initializes param dict for a model

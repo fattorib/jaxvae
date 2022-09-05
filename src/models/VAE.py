@@ -37,7 +37,7 @@ class Decoder(nn.Module):
 
 
 class Encoder(nn.Module):
-    num_latents: int = 5
+    num_latents: int
 
     @nn.compact
     def __call__(self, x):
@@ -58,7 +58,7 @@ class VAE(nn.Module):
     <https://www.tensorflow.org/tutorials/generative/cvae>
     """
 
-    num_latents: int = 5
+    num_latents: int
 
     def setup(self):
 
