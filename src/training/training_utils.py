@@ -34,6 +34,7 @@ def create_train_state(
     """Creates initial `TrainState` for model."""
     params = initialized(rng, 28, model)
     mask = jax.tree_map(lambda x: x.ndim != 1, params)
+
     tx = optax.adamw(
         learning_rate=learning_rate_fn, weight_decay=weight_decay, mask=mask
     )

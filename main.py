@@ -3,10 +3,11 @@ from jax import random
 
 # Flax imports
 import jax
+import optax 
 
 # PyTorch - for dataloading
 import torchvision.transforms as transforms
-from torchvision.datasets import MNIST
+from torchvision.datasets import MNIST, FashionMNIST
 from src.utils.dataloader import *
 
 # Model imports
@@ -15,7 +16,7 @@ from src.models.VAE import VAE
 # Utils
 from src.training.losses import *
 from src.utils.sample import sample_from_latents, np_to_fig
-from src.training.training_utils import initialized, create_train_state
+from src.training.training_utils import create_train_state
 
 # Logging/Config Stuffs
 import argparse
@@ -47,12 +48,33 @@ def main():
         ]
     )
 
-    train_dataset = MNIST(
-        root=f"data/MNIST",
-        train=True,
-        download=True,
-        transform=transform_train,
-    )
+    if cfg.dataset == 'MNIST':
+        train_dataset = MNIST(
+            root=f"data/MNIST",
+            train=True,
+            download=True,
+            transform=transform_train,
+        )
+        validation_dataset = MNIST(
+            root=f"data/MNIST",
+            train=False,
+            download=True,
+            transform=transform_train,
+        )
+    
+    elif cfg.dataset == 'FashionMNIST':
+        train_dataset = FashionMNIST(
+            root=f"data/FashionMNIST",
+            train=True,
+            download=True,
+            transform=transform_train,
+        )
+        validation_dataset = FashionMNIST(
+            root=f"data/FashionMNIST",
+            train=False,
+            download=True,
+            transform=transform_train,
+        )
 
     train_loader = NumpyLoader(
         train_dataset,
@@ -62,12 +84,7 @@ def main():
         pin_memory=False,
     )
 
-    validation_dataset = MNIST(
-        root=f"data/MNIST",
-        train=False,
-        download=True,
-        transform=transform_train,
-    )
+    
 
     validation_loader = NumpyLoader(
         validation_dataset,
@@ -85,6 +102,7 @@ def main():
         "batch_size": cfg.training.batch_size,
         "latent_dimension": cfg.model.latent_dim,
         "gradient_accumulation_steps": cfg.training.gradient_accumulation_steps,
+        "dataset": cfg.dataset
     }
 
     # --------- Create Train State ---------#
@@ -93,9 +111,18 @@ def main():
 
     model = VAE(num_latents=cfg.model.latent_dim)
 
+
+    if cfg.training.use_schedule:
+        # Warmup over 1 epoch, decay LR to 0 over remaining epochs
+        steps_per_epoch = len(train_loader)//cfg.training.gradient_accumulation_steps
+        learning_rate_fn=optax.warmup_cosine_decay_schedule(init_value = 0, peak_value=cfg.training.learning_rate, warmup_steps= steps_per_epoch, decay_steps=(cfg.training.epochs-1)*steps_per_epoch)
+        
+    else:
+        learning_rate_fn=cfg.training.learning_rate,
+    
     state = create_train_state(
         init_rng,
-        learning_rate_fn=cfg.training.learning_rate,
+        learning_rate_fn,
         weight_decay=cfg.training.weight_decay,
         model=model,
         grad_accum_steps=cfg.training.gradient_accumulation_steps,
