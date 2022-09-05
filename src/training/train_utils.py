@@ -1,26 +1,36 @@
 import jax.numpy as jnp
 import jax
 import flax.linen as nn
-from jax.scipy.stats import norm
-from optax import sigmoid_binary_cross_entropy
-
-
-def create_cos_anneal_schedule(base_lr, min_lr, max_steps):
-    def learning_rate_fn(step):
-        cosine_decay = (0.5) * (1 + jnp.cos(jnp.pi * step / max_steps))
-        decayed = (1 - min_lr) * cosine_decay + min_lr
-        return base_lr * decayed
-
-    return learning_rate_fn
-
 
 @jax.vmap
-def kl_divergence(mean, logvar):
+def kl_divergence(mean: jnp.array, logvar: jnp.array) -> jnp.array:
+    """KL Divergence for standard normal prior
+
+    Args:
+        mean (jnp.array): Array of latent means
+        logvar (jnp.array): Array of latent logvars
+
+    Returns:
+        jnp.array: KL Divergence
+    """
     return -0.5 * jnp.sum(1 + logvar - jnp.square(mean) - jnp.exp(logvar))
 
 
 @jax.jit
-def vae_loss(logits, x, mean, logvar):
+def vae_loss(logits: jnp.array, x: jnp.array, mean: jnp.array, logvar:jnp.array) -> jnp.array:
+    """VAE loss function. Sum of 
+        -'reconstruction' loss
+        -'prior-matching' loss
+
+    Args:
+        logits (jnp.array): Output logits from model. These correspond to reconstructed batch from VAE
+        x (jnp.array): Batch ground truth
+        mean (jnp.array): Array of latent means
+        logvar (jnp.array): Array of latent logvars
+
+    Returns:
+        jnp.array: VAE loss
+    """
     logits = nn.log_sigmoid(logits)
     px_z_loss = -jnp.sum(
         x * logits + (1.0 - x) * jnp.log(-jnp.expm1(logits))
