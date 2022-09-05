@@ -1,26 +1,28 @@
 """ 
 Helper code for sampling from VAE
 """
-import jax 
+import jax
 from jax import random
 import flax
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 import jax.numpy as jnp
-import numpy as np 
+import numpy as np
 
-def sample_from_latents(params, model, rng, num_samples = 64):
 
-    latents = random.normal(rng, (num_samples, 2*model.num_latents))
+def sample_from_latents(params, model, rng, num_samples=64):
+
+    latents = random.normal(rng, (num_samples, 2 * model.num_latents))
 
     def generate(model):
         return model.generate(latents, rng)
-    generated = flax.linen.apply(generate, model)({'params': params})
-    
+
+    generated = flax.linen.apply(generate, model)({"params": params})
+
     np_images = jax.device_get(generated).reshape(num_samples, 28, 28)
 
     fig = plt.figure()
 
-    ncols,nrows = int(jnp.sqrt(num_samples)), int(jnp.sqrt(num_samples))
+    ncols, nrows = int(jnp.sqrt(num_samples)), int(jnp.sqrt(num_samples))
 
     axes = [
         fig.add_subplot(nrows, ncols, r * ncols + c + 1)
@@ -40,11 +42,11 @@ def sample_from_latents(params, model, rng, num_samples = 64):
     return fig
 
 
-def np_to_fig(array, num_samples = 16):
+def np_to_fig(array, num_samples=16):
 
     fig = plt.figure()
 
-    ncols,nrows = int(jnp.sqrt(num_samples)), int(jnp.sqrt(num_samples))
+    ncols, nrows = int(jnp.sqrt(num_samples)), int(jnp.sqrt(num_samples))
 
     axes = [
         fig.add_subplot(nrows, ncols, r * ncols + c + 1)
@@ -55,7 +57,9 @@ def np_to_fig(array, num_samples = 16):
     i = 0
 
     for ax in axes:
-        ax.imshow(np.where(array[i, :]> .5, 1.0, 0.0).astype('float32'), cmap="gray")
+        ax.imshow(
+            np.where(array[i, :] > 0.5, 1.0, 0.0).astype("float32"), cmap="gray"
+        )
         i += 1
 
     for ax in axes:
@@ -63,4 +67,3 @@ def np_to_fig(array, num_samples = 16):
         ax.set_yticks([])
 
     return fig
-
