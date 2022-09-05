@@ -1,7 +1,8 @@
 import jax.numpy as jnp
 import jax 
-from optax import sigmoid_binary_cross_entropy
+import flax.linen as nn 
 from jax.scipy.stats import norm
+from optax import sigmoid_binary_cross_entropy
 
 def create_cos_anneal_schedule(base_lr, min_lr, max_steps):
     def learning_rate_fn(step):
@@ -18,9 +19,10 @@ def kl_divergence(mean, logvar):
 
 @jax.jit
 def vae_loss(logits, x, mean, logvar):
-    px_z_loss = sigmoid_binary_cross_entropy(logits,x)
+    logits = nn.log_sigmoid(logits)
+    px_z_loss = -jnp.sum(x * logits + (1. - x) * jnp.log(-jnp.expm1(logits))).mean()
 
-    kl_loss = kl_divergence(mean, logvar)
+    kl_loss = kl_divergence(mean, logvar).mean()
 
-    return (px_z_loss + kl_loss).mean()
+    return px_z_loss + kl_loss
 

@@ -6,40 +6,6 @@ import jax
 ModuleDef = Any
 dtypedef = Any
 
-# class Decoder(nn.Module):
-    
-
-#     @nn.compact
-#     def __call__(self,z, rng_key):
-#         mu, logvar = jnp.split(z, indices_or_sections=2, axis = -1)
-#         eps = jax.random.normal(key = rng_key, shape = logvar.shape)
-#         z = mu + eps*jnp.exp(0.5 * logvar)
-#         # decoder: learning $p_\theta (x|z)$ where z is a latent and x is a generated sample
-#         z = nn.Dense(features = 7*7*32)(z)
-#         z = z.reshape(-1,7,7,32)
-#         z = nn.ConvTranspose(kernel_size=(3,3), strides=(2,2), features = 64, padding = 'SAME')(z)
-#         z = nn.relu(z)
-#         z = nn.ConvTranspose(kernel_size=(3,3), strides=(2,2), features = 32, padding = 'SAME')(z)
-#         z = nn.relu(z)
-
-#         out = nn.ConvTranspose(kernel_size=(3,3), strides=(1,1), features = 1, padding = 'SAME')(z)
-
-#         return (out, mu, logvar)
-
-# class Encoder(nn.Module):
-#     num_latents: int = 5
-
-#     @nn.compact
-#     def __call__(self,x):
-#         x = nn.Conv(kernel_size=(3,3), strides=(2,2), features = 32)(x)
-#         x = nn.relu(x)
-#         x = nn.Conv(kernel_size=(3,3), strides=(2,2), features = 64)(x)
-#         x = nn.relu(x)
-#         x = jnp.mean(x, axis=(1, 2))
-#         z = nn.Dense(features= 2 * self.num_latents)(x)
-#         return z 
-
-
 class Decoder(nn.Module):
     
 
@@ -49,10 +15,15 @@ class Decoder(nn.Module):
         eps = jax.random.normal(key = rng_key, shape = logvar.shape)
         z = mu + eps*jnp.exp(0.5 * logvar)
         # decoder: learning $p_\theta (x|z)$ where z is a latent and x is a generated sample
-        z = nn.Dense(features = 500, name='fc1')(z)
-        
+        z = nn.Dense(features = 7*7*32)(z)
+        z = z.reshape(-1,7,7,32)
         z = nn.relu(z)
-        out = nn.Dense(784, name='fc2')(z)
+        z = nn.ConvTranspose(kernel_size=(3,3), strides=(2,2), features = 64, padding = 'SAME')(z)
+        z = nn.relu(z)
+        z = nn.ConvTranspose(kernel_size=(3,3), strides=(2,2), features = 32, padding = 'SAME')(z)
+        z = nn.relu(z)
+
+        out = nn.ConvTranspose(kernel_size=(3,3), strides=(1,1), features = 1, padding = 'SAME')(z)
 
         return (out, mu, logvar)
 
@@ -61,10 +32,40 @@ class Encoder(nn.Module):
 
     @nn.compact
     def __call__(self,x):
-        x = nn.Dense(500, name='fc1')(x)
+        x = nn.Conv(kernel_size=(3,3), strides=(2,2), features = 32)(x)
         x = nn.relu(x)
+        x = nn.Conv(kernel_size=(3,3), strides=(2,2), features = 64)(x)
+        x = nn.relu(x)
+        x = jnp.mean(x, axis=(1, 2))
         z = nn.Dense(features= 2 * self.num_latents)(x)
         return z 
+
+
+# class Decoder(nn.Module):
+    
+
+#     @nn.compact
+#     def __call__(self,z, rng_key):
+#         mu, logvar = jnp.split(z, indices_or_sections=2, axis = -1)
+#         eps = jax.random.normal(key = rng_key, shape = logvar.shape)
+#         z = mu + eps*jnp.exp(0.5 * logvar)
+#         # decoder: learning $p_\theta (x|z)$ where z is a latent and x is a generated sample
+#         z = nn.Dense(features = 500, name='fc1')(z)
+        
+#         z = nn.relu(z)
+#         out = nn.Dense(784, name='fc2')(z)
+
+#         return (out, mu, logvar)
+
+# class Encoder(nn.Module):
+#     num_latents: int = 5
+
+#     @nn.compact
+#     def __call__(self,x):
+#         x = nn.Dense(500, name='fc1')(x)
+#         x = nn.relu(x)
+#         z = nn.Dense(features= 2 * self.num_latents)(x)
+#         return z 
 
 
 

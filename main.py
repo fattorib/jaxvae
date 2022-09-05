@@ -234,7 +234,6 @@ def eval_epoch(state, rng, dataloader):
     batch_metrics = []
 
     for i, (batch, _) in tqdm(enumerate(dataloader), total = len(dataloader)):
-        batch = batch.reshape(-1,784)
         new_rng, subrng = random.split(rng)
         metrics, original, reconstructed = eval_step(
             state,
@@ -257,7 +256,6 @@ def train_epoch(state, rng, dataloader):
     batch_metrics = []
 
     for i, (batch, _) in tqdm(enumerate(dataloader), total = len(dataloader)):
-        batch = batch.reshape(-1,784)
         new_rng, subrng = random.split(rng)
         state, metrics = train_step(
             state,
