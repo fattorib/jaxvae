@@ -1,7 +1,10 @@
+""" 
+Class + helper methods for interfacing with PyTorch dataloaders
+"""
+
 from torch.utils import data
 import numpy as np
 import jax.numpy as jnp
-import flax
 
 
 def numpy_collate(batch):
