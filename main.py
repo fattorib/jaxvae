@@ -79,6 +79,7 @@ def main():
         shuffle=True,
         num_workers=cfg.training.workers,
         pin_memory=False,
+        drop_last=True
     )
 
     run = Run()

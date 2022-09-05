@@ -6,6 +6,7 @@ from jax import random
 import flax
 import matplotlib.pyplot as plt 
 import jax.numpy as jnp
+import numpy as np 
 
 def sample_from_latents(params, model, rng, num_samples = 64):
 
@@ -52,8 +53,9 @@ def np_to_fig(array, num_samples = 16):
     ]
 
     i = 0
+
     for ax in axes:
-        ax.imshow(array[i, :], cmap="gray")
+        ax.imshow(np.where(array[i, :]> .5, 1.0, 0.0).astype('float32'), cmap="gray")
         i += 1
 
     for ax in axes:
