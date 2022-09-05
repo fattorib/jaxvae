@@ -6,15 +6,18 @@ import jax
 ModuleDef = Any
 dtypedef = Any
 
+def reparametrize(z, rng_key):
+    # reparamatrization trick: used to ensure we can backprop through mean & variance
+    mu, logvar = jnp.split(z, indices_or_sections=2, axis=-1)
+    eps = jax.random.normal(key=rng_key, shape=logvar.shape)
+    z = mu + eps * jnp.exp(0.5 * logvar)
+
+    return z, (mu, logvar)
+
 
 class Decoder(nn.Module):
     @nn.compact
-    def __call__(self, z, rng_key):
-
-        # reparamatrization trick: used to ensure we can backprop through mean & variance
-        mu, logvar = jnp.split(z, indices_or_sections=2, axis=-1)
-        eps = jax.random.normal(key=rng_key, shape=logvar.shape)
-        z = mu + eps * jnp.exp(0.5 * logvar)
+    def __call__(self, z):
 
         # decoder: learning $p_\theta (x|z)$ where z is a latent and x is a generated sample
         z = nn.Dense(features=7 * 7 * 32)(z)
@@ -33,7 +36,7 @@ class Decoder(nn.Module):
             kernel_size=(3, 3), strides=(1, 1), features=1, padding="SAME"
         )(z)
 
-        return (out, mu, logvar)
+        return out 
 
 
 class Encoder(nn.Module):
@@ -67,7 +70,10 @@ class VAE(nn.Module):
 
     def __call__(self, x, rng_key):
         z = self.encoder(x)
-        return self.decoder(z, rng_key)
 
-    def generate(self, z, rng_key):
-        return nn.sigmoid(self.decoder(z, rng_key)[0])
+        z, (mu,logvar) = reparametrize(z, rng_key)
+
+        return (self.decoder(z), mu,logvar)
+
+    def generate(self, z):
+        return nn.sigmoid(self.decoder(z))

@@ -25,10 +25,10 @@ def sample_from_latents(
         plt.figure: Grid of generated samples
     """
 
-    latents = random.normal(rng, (num_samples, 2 * model.num_latents))
+    latents = random.normal(rng, (num_samples, model.num_latents))
 
     def generate(model):
-        return model.generate(latents, rng)
+        return model.generate(latents)
 
     generated = flax.linen.apply(generate, model)({"params": params})
 
