@@ -7,9 +7,12 @@ import flax
 import matplotlib.pyplot as plt
 import jax.numpy as jnp
 import numpy as np
+from typing import Any
 
 
-def sample_from_latents(params, model, rng, num_samples=64):
+def sample_from_latents(
+    params: Any, model: flax.linen.module, rng, num_samples: int = 64
+) -> plt.figure:
 
     latents = random.normal(rng, (num_samples, 2 * model.num_latents))
 
@@ -42,7 +45,8 @@ def sample_from_latents(params, model, rng, num_samples=64):
     return fig
 
 
-def np_to_fig(array, num_samples=16):
+def np_to_fig(array: np.array, num_samples: int = 16) -> plt.figure:
+    """Convert numpy array of samples to matplotlib fig"""
 
     fig = plt.figure()
 

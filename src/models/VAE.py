@@ -10,9 +10,12 @@ dtypedef = Any
 class Decoder(nn.Module):
     @nn.compact
     def __call__(self, z, rng_key):
+
+        # reparamatrization trick: used to ensure we can backprop through mean & variance
         mu, logvar = jnp.split(z, indices_or_sections=2, axis=-1)
         eps = jax.random.normal(key=rng_key, shape=logvar.shape)
         z = mu + eps * jnp.exp(0.5 * logvar)
+
         # decoder: learning $p_\theta (x|z)$ where z is a latent and x is a generated sample
         z = nn.Dense(features=7 * 7 * 32)(z)
         z = z.reshape(-1, 7, 7, 32)
@@ -38,6 +41,8 @@ class Encoder(nn.Module):
 
     @nn.compact
     def __call__(self, x):
+
+        # encoder: learning $q_\phi (z|x)$ where z is the generated latent and x is a datapoint
         x = nn.Conv(kernel_size=(3, 3), strides=(2, 2), features=32)(x)
         x = nn.relu(x)
         x = nn.Conv(kernel_size=(3, 3), strides=(2, 2), features=64)(x)
@@ -45,7 +50,6 @@ class Encoder(nn.Module):
         x = jnp.mean(x, axis=(1, 2))
         z = nn.Dense(features=2 * self.num_latents)(x)
         return z
-
 
 
 class VAE(nn.Module):

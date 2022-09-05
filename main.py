@@ -1,7 +1,5 @@
-from os import stat
 import numpy as np
 import optax
-import functools
 
 from jax import random
 
@@ -18,6 +16,7 @@ from src.utils.dataloader import *
 # Model imports
 from src.models.VAE import VAE
 
+# Utils
 from src.training.train_utils import *
 from src.utils.sample import sample_from_latents, np_to_fig
 
@@ -88,7 +87,7 @@ def main():
         "learning_rate": cfg.training.learning_rate,
         "batch_size": cfg.training.batch_size,
         "latent_dimension": cfg.model.latent_dim,
-        "gradient_accumulation_steps": cfg.training.gradient_accumulation_steps
+        "gradient_accumulation_steps": cfg.training.gradient_accumulation_steps,
     }
 
     # --------- Create Train State ---------#
@@ -102,7 +101,7 @@ def main():
         learning_rate_fn=cfg.training.learning_rate,
         weight_decay=cfg.training.weight_decay,
         model=model,
-        grad_accum_steps = cfg.training.gradient_accumulation_steps
+        grad_accum_steps=cfg.training.gradient_accumulation_steps,
     )
 
     del init_rng
@@ -137,7 +136,10 @@ def main():
         )
 
         run.track(
-            aim_image, name="Latent Generations", step=epoch, context={"subset": "train"}
+            aim_image,
+            name="Latent Generations",
+            step=epoch,
+            context={"subset": "train"},
         )
         run.track(
             aim_original,
@@ -202,7 +204,9 @@ def initialized(key, image_size, model):
     return variables
 
 
-def create_train_state(rng, learning_rate_fn, weight_decay, model, grad_accum_steps):
+def create_train_state(
+    rng, learning_rate_fn, weight_decay, model, grad_accum_steps
+):
     """Creates initial `TrainState`."""
     params = initialized(rng, 28, model)
     mask = jax.tree_map(lambda x: x.ndim != 1, params)
@@ -254,7 +258,7 @@ def train_step(state, batch, rng_key):
 
 @jax.jit
 def eval_step(state, batch, rng_key):
-    """Train for a single step."""
+    """Validate a single batch."""
 
     logits, mean, logvar = state.apply_fn(
         {"params": state.params["params"]},
