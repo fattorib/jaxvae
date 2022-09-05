@@ -48,33 +48,19 @@ def main():
         ]
     )
 
-    if cfg.dataset == 'MNIST':
-        train_dataset = MNIST(
-            root=f"data/MNIST",
-            train=True,
-            download=True,
-            transform=transform_train,
-        )
-        validation_dataset = MNIST(
-            root=f"data/MNIST",
-            train=False,
-            download=True,
-            transform=transform_train,
-        )
+    train_dataset = MNIST(
+        root=f"data/MNIST",
+        train=True,
+        download=True,
+        transform=transform_train,
+    )
+    validation_dataset = MNIST(
+        root=f"data/MNIST",
+        train=False,
+        download=True,
+        transform=transform_train,
+    )
     
-    elif cfg.dataset == 'FashionMNIST':
-        train_dataset = FashionMNIST(
-            root=f"data/FashionMNIST",
-            train=True,
-            download=True,
-            transform=transform_train,
-        )
-        validation_dataset = FashionMNIST(
-            root=f"data/FashionMNIST",
-            train=False,
-            download=True,
-            transform=transform_train,
-        )
 
     train_loader = NumpyLoader(
         train_dataset,
