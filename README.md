@@ -3,12 +3,19 @@
 Read about VAEs recently and wanted some more JAX practice.
 
 ## Samples
-All images done using 2 latent variables
-Reconstructions:
+*All samples from a model train with 2 latent variables*
 
-Generated Samples:
+**Generated Samples**:
+Sampled latents from prior and fed through encoder. 
+![](imgs/generated.png)
 
-Scatterplot of posterior means:
+**Reconstructions**:
+![](imgs/reconstructed.png)
+
+
+**Scatterplot of posterior means**:
+Scatter plot of means of latents from decoder.
+![](imgs/latents_scatter.png)
 
 ## Code
 
