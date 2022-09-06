@@ -1,0 +1,8 @@
+aim
+flax
+jax
+matplotlib
+numpy
+omegaconf
+optax
+torch
