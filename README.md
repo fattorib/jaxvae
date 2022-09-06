@@ -1,10 +1,26 @@
-# jaxVAE
+# Variational Autoencoder
 
-VAE in Jax
+Read about VAEs recently and wanted some more JAX practice.
 
-TODO:
+## Samples
+All images done using 2 latent variables
+Reconstructions:
 
-1. Model (enc + dec)
-2. Training loop
-3. Logging with aim (including samples)
+Generated Samples:
+
+Scatterplot of posterior means:
+
+## Code
+
+```bash
+# clone and install requirements
+git clone https://github.com/fattorib/jaxvae.git
+pip install -r requirements
+
+# start aim for tracking
+aim up 
+
+# train model
+python main.py
+```
 

@@ -7,7 +7,7 @@ import optax
 
 # PyTorch - for dataloading
 import torchvision.transforms as transforms
-from torchvision.datasets import MNIST, FashionMNIST
+from torchvision.datasets import MNIST
 from src.utils.dataloader import *
 
 # Model imports
@@ -87,7 +87,6 @@ def main():
         "gradient_accumulation_steps": cfg.training.gradient_accumulation_steps,
     }
 
-    # --------- Create Train State ---------#
     rng = jax.random.PRNGKey(0)
     rng, init_rng = jax.random.split(rng)
 

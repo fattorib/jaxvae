@@ -104,10 +104,10 @@ def latents_to_scatter(latents: np.array, labels: np.array) -> plt.figure:
     """
 
     fig, ax = plt.subplots()
-    
+
     ax.scatter(latents[:, 0], latents[:, 1], c=labels)
-    ax.set_xlabel(r'$\mu_z(x)_0$')
-    ax.set_ylabel(r'$\mu_z(x)_1$')
+    ax.set_xlabel(r"$\mu_z(x)_0$")
+    ax.set_ylabel(r"$\mu_z(x)_1$")
     ax.set_title("Latent posterior mean given image")
     plt.legend()
 
