@@ -103,12 +103,12 @@ def latents_to_scatter(latents: np.array, labels: np.array) -> plt.figure:
         plt.figure: Scatterplot of latents
     """
 
-    fig, ax = plt.subplots()
+    fig = plt.figure()
 
-    ax.scatter(latents[:, 0], latents[:, 1], c=labels)
-    ax.set_xlabel(r"$\mu_z(x)_0$")
-    ax.set_ylabel(r"$\mu_z(x)_1$")
-    ax.set_title("Latent posterior mean given image")
-    plt.legend()
+    scatter = plt.scatter(latents[:, 0], latents[:, 1], c=labels)
+    plt.xlabel(r"$\mu_z(x)_0$")
+    plt.ylabel(r"$\mu_z(x)_1$")
+    plt.title("Latent posterior means")
+    plt.legend(handles=scatter.legend_elements()[0], labels=['0','1','2','3','4','5','6','7','8','9'])
 
     return fig
