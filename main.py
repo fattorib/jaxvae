@@ -3,7 +3,7 @@ from jax import random
 
 # Flax imports
 import jax
-import optax 
+import optax
 
 # PyTorch - for dataloading
 import torchvision.transforms as transforms
@@ -15,7 +15,7 @@ from src.models.VAE import VAE
 
 # Utils
 from src.training.losses import *
-from src.utils.sample import sample_from_latents, np_to_fig
+from src.utils.sample import sample_from_latents, np_to_fig, latents_to_scatter
 from src.training.training_utils import create_train_state
 
 # Logging/Config Stuffs
@@ -60,7 +60,6 @@ def main():
         download=True,
         transform=transform_train,
     )
-    
 
     train_loader = NumpyLoader(
         train_dataset,
@@ -69,8 +68,6 @@ def main():
         num_workers=cfg.training.workers,
         pin_memory=False,
     )
-
-    
 
     validation_loader = NumpyLoader(
         validation_dataset,
@@ -96,15 +93,21 @@ def main():
 
     model = VAE(num_latents=cfg.model.latent_dim)
 
-
     if cfg.training.use_schedule:
         # Warmup over 1 epoch, decay LR to 0 over remaining epochs
-        steps_per_epoch = len(train_loader)//cfg.training.gradient_accumulation_steps
-        learning_rate_fn=optax.warmup_cosine_decay_schedule(init_value = 0, peak_value=cfg.training.learning_rate, warmup_steps= steps_per_epoch, decay_steps=(cfg.training.epochs-1)*steps_per_epoch)
-        
+        steps_per_epoch = (
+            len(train_loader) // cfg.training.gradient_accumulation_steps
+        )
+        learning_rate_fn = optax.warmup_cosine_decay_schedule(
+            init_value=0,
+            peak_value=cfg.training.learning_rate,
+            warmup_steps=steps_per_epoch,
+            decay_steps=(cfg.training.epochs - 1) * steps_per_epoch,
+        )
+
     else:
-        learning_rate_fn=cfg.training.learning_rate,
-    
+        learning_rate_fn = (cfg.training.learning_rate,)
+
     state = create_train_state(
         init_rng,
         learning_rate_fn,
@@ -119,20 +122,32 @@ def main():
         rng, subrng = jax.random.split(rng)
         state, train_metrics_np = train_epoch(state, subrng, train_loader)
 
-        validation_metrics, original, reconstructed = eval_epoch(
-            state, subrng, validation_loader
+        (
+            validation_metrics,
+            original,
+            reconstructed,
+            (latent_array, labels_array),
+        ) = eval_epoch(state, subrng, validation_loader)
+
+        labels_array = np.concatenate(labels_array).reshape(
+            -1,
+        )
+        latent_array = np.concatenate(latent_array).reshape(
+            -1, cfg.model.latent_dim
         )
 
         generated_grid = sample_from_latents(
-            state.params["params"], VAE(num_latents=cfg.model.latent_dim), rng
+            state.params["params"],
+            VAE(num_latents=cfg.model.latent_dim),
+            subrng,
         )
-
-        rng = subrng
 
         # Logging to Aim
         original, reconstructed = np_to_fig(
             jax.device_get(original).reshape(-1, 28, 28)
         ), np_to_fig(jax.device_get(reconstructed).reshape(-1, 28, 28))
+
+        latent_fig = latents_to_scatter(latent_array, labels_array)
 
         aim_image = Image(
             generated_grid, format="png", optimize=True, quality=90
@@ -143,6 +158,8 @@ def main():
         aim_reconstructed = Image(
             reconstructed, format="png", optimize=True, quality=90
         )
+
+        aim_scatter = Image(latent_fig, format="png", optimize=True, quality=90)
 
         run.track(
             aim_image,
@@ -159,6 +176,13 @@ def main():
         run.track(
             aim_reconstructed,
             name="Reconstructed Images",
+            step=epoch,
+            context={"subset": "train"},
+        )
+
+        run.track(
+            aim_scatter,
+            name="Latent Scatter",
             step=epoch,
             context={"subset": "train"},
         )
@@ -237,6 +261,8 @@ def train_step(state, batch, rng_key):
 def eval_step(state, batch, rng_key):
     """Validate a single batch."""
 
+    mean_array = []
+
     logits, mean, logvar = state.apply_fn(
         {"params": state.params["params"]},
         batch,
@@ -252,29 +278,42 @@ def eval_step(state, batch, rng_key):
         "Reconstruction Loss": loss - prior_loss,
     }
 
-    return metrics, batch, logits
+    mean_array.append(jax.device_get(mean))
+
+    return metrics, batch, logits, mean_array
 
 
 def eval_epoch(state, rng, dataloader):
     """Validation loop"""
     batch_metrics = []
+    latent_array = []
+    labels_array = []
 
-    for i, (batch, _) in tqdm(enumerate(dataloader), total=len(dataloader)):
-        new_rng, subrng = random.split(rng)
-        metrics, original, reconstructed = eval_step(
+    for i, (batch, labels) in tqdm(
+        enumerate(dataloader), total=len(dataloader)
+    ):
+        rng, subrng = random.split(rng)
+        metrics, original, reconstructed, batch_latents = eval_step(
             state,
             batch,
             subrng,
         )
         batch_metrics.append(metrics)
-        rng = new_rng
+        latent_array.append(batch_latents)
+        labels_array.append(labels)
 
     batch_metrics_np = jax.device_get(batch_metrics)
     epoch_metrics_np = {
         k: np.mean([metrics[k] for metrics in batch_metrics_np])
         for k in batch_metrics_np[0]
     }
-    return epoch_metrics_np, original, reconstructed
+
+    return (
+        epoch_metrics_np,
+        original,
+        reconstructed,
+        (latent_array, labels_array),
+    )
 
 
 def train_epoch(state, rng, dataloader):

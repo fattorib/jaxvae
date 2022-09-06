@@ -90,3 +90,22 @@ def np_to_fig(array: np.array, num_samples: int = 16) -> plt.figure:
         ax.set_yticks([])
 
     return fig
+
+
+def latents_to_scatter(latents: np.array, labels: np.array) -> plt.figure:
+    """Plots scatter plot of first 2 latent variables
+
+    Args:
+        latents (np.array): Array of latent means
+        labels (_type_): Array of labels
+
+    Returns:
+        plt.figure: Scatterplot of latents
+    """
+
+    fig = plt.figure()
+
+    plt.scatter(latents[:, 0], latents[:, 1], c=labels)
+    plt.legend()
+
+    return fig

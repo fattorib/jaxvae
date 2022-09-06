@@ -36,7 +36,7 @@ def reparametrize(mean, logvar, rng_key):
 #             kernel_size=(3, 3), strides=(1, 1), features=1, padding="SAME"
 #         )(z)
 
-#         return out 
+#         return out
 
 
 # class Encoder(nn.Module):
@@ -57,28 +57,27 @@ def reparametrize(mean, logvar, rng_key):
 
 
 class Decoder(nn.Module):
-
-
     @nn.compact
     def __call__(self, z):
         # decoder: learning $p_\theta (x|z)$ where z is a latent and x is a generated sample
-        z = nn.Dense(features = 500, name='fc1')(z)
-
+        z = nn.Dense(features=500, name="fc1")(z)
         z = nn.relu(z)
-        out = nn.Dense(784, name='fc2')(z)
+        out = nn.Dense(784, name="fc2")(z)
 
-        return out 
+        return out
+
 
 class Encoder(nn.Module):
     num_latents: int = 5
 
     @nn.compact
-    def __call__(self,x):
-        x = nn.Dense(500, name='fc1')(x)
+    def __call__(self, x):
+        x = nn.Dense(500, name="fc1")(x)
         x = nn.relu(x)
         z_mean = nn.Dense(features=self.num_latents)(x)
         z_logvar = nn.Dense(features=self.num_latents)(x)
         return z_mean, z_logvar
+
 
 class VAE(nn.Module):
 
@@ -96,13 +95,13 @@ class VAE(nn.Module):
     def __call__(self, x, rng_key):
         z_mean, z_logvar = self.encoder(x)
 
-        z, (mu,logvar) = reparametrize(z_mean, z_logvar, rng_key)
+        z, (mu, logvar) = reparametrize(z_mean, z_logvar, rng_key)
 
-        return (self.decoder(z), mu,logvar)
+        return (self.decoder(z), mu, logvar)
 
     def generate(self, z):
         return nn.sigmoid(self.decoder(z))
 
-    def extract_latents(self,x):
+    def extract_latents(self, x):
         z_mean, z_logvar = self.encoder(x)
         return z_mean, z_logvar

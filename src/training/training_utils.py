@@ -20,14 +20,15 @@ def initialized(key, image_size, model):
     """
     # input_shape = (1, image_size, image_size, 1)
 
-
     input_shape = (1, 784)
 
-    @jax.jit
-    def init(rng, shape):
-        return model.init(rng, shape, rng)
+    rng_init, rng_model = jax.random.split(key)
 
-    variables = init(rng=key, shape=jnp.ones(input_shape))
+    @jax.jit
+    def init(rng, shape, key):
+        return model.init(rng, shape, key)
+
+    variables = init(rng=rng_init, shape=jnp.ones(input_shape), key=rng_model)
     return variables
 
 
