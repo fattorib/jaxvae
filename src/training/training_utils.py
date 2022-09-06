@@ -3,11 +3,14 @@ Helper methods used during training setup.
 """
 import jax
 import jax.numpy as jnp
+from jax import random
 import optax
 from flax.training import train_state
+import flax.linen as nn
+from typing import Union, Callable
 
 
-def initialized(key, image_size, model):
+def initialized(key: random.PRNGKey, image_size: int, model: nn.Module):
     """Initializes param dict for a model
 
     Args:
@@ -31,7 +34,11 @@ def initialized(key, image_size, model):
 
 
 def create_train_state(
-    rng, learning_rate_fn, weight_decay, model, grad_accum_steps
+    rng: random.PRNGKey,
+    learning_rate_fn: Union[float, Callable],
+    weight_decay: float,
+    model: nn.Module,
+    grad_accum_steps: int,
 ):
     """Creates initial `TrainState` for model."""
     params = initialized(rng, 784, model)

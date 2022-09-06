@@ -11,7 +11,10 @@ from typing import Any
 
 
 def sample_from_latents(
-    params: Any, model: flax.linen.module, rng, num_samples: int = 64
+    params: Any,
+    model: flax.linen.module,
+    rng: random.PRNGKey,
+    num_samples: int = 64,
 ) -> plt.figure:
     """Samples latents and creates a grid of generated samples
 
@@ -97,7 +100,7 @@ def latents_to_scatter(latents: np.array, labels: np.array) -> plt.figure:
 
     Args:
         latents (np.array): Array of latent means
-        labels (_type_): Array of labels
+        labels (np.array): Array of labels
 
     Returns:
         plt.figure: Scatterplot of latents
@@ -109,6 +112,9 @@ def latents_to_scatter(latents: np.array, labels: np.array) -> plt.figure:
     plt.xlabel(r"$\mu_z(x)_0$")
     plt.ylabel(r"$\mu_z(x)_1$")
     plt.title("Latent posterior means")
-    plt.legend(handles=scatter.legend_elements()[0], labels=['0','1','2','3','4','5','6','7','8','9'])
+    plt.legend(
+        handles=scatter.legend_elements()[0],
+        labels=["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+    )
 
     return fig

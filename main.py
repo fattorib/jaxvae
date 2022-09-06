@@ -1,5 +1,6 @@
 import numpy as np
 from jax import random
+from typing import Any
 
 # Flax imports
 import jax
@@ -226,7 +227,7 @@ def main():
 
 
 @jax.jit
-def train_step(state, batch, rng_key):
+def train_step(state: Any, batch: jnp.array, rng_key: random.PRNGKey):
     """Train for a single step."""
 
     def loss_fn(params):
@@ -257,7 +258,7 @@ def train_step(state, batch, rng_key):
 
 
 @jax.jit
-def eval_step(state, batch, rng_key):
+def eval_step(state: Any, batch: jnp.array, rng_key: random.PRNGKey):
     """Validate a single batch."""
 
     mean_array = []
@@ -282,7 +283,7 @@ def eval_step(state, batch, rng_key):
     return metrics, batch, logits, mean_array
 
 
-def eval_epoch(state, rng, dataloader):
+def eval_epoch(state: Any, rng: random.PRNGKey, dataloader: NumpyLoader):
     """Validation loop"""
     batch_metrics = []
     latent_array = []
@@ -315,7 +316,7 @@ def eval_epoch(state, rng, dataloader):
     )
 
 
-def train_epoch(state, rng, dataloader):
+def train_epoch(state: Any, rng: random.PRNGKey, dataloader: NumpyLoader):
     """Train for a single epoch."""
     batch_metrics = []
 
