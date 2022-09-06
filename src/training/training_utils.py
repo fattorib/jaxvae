@@ -18,9 +18,7 @@ def initialized(key, image_size, model):
     Returns:
         _type_: _description_
     """
-    # input_shape = (1, image_size, image_size, 1)
-
-    input_shape = (1, 784)
+    input_shape = (1, image_size, image_size, 1)
 
     rng_init, rng_model = jax.random.split(key)
 
