@@ -18,7 +18,7 @@ def initialized(key, image_size, model):
     Returns:
         _type_: _description_
     """
-    input_shape = (1, image_size, image_size, 1)
+    input_shape = (1, image_size)
 
     rng_init, rng_model = jax.random.split(key)
 
@@ -34,7 +34,7 @@ def create_train_state(
     rng, learning_rate_fn, weight_decay, model, grad_accum_steps
 ):
     """Creates initial `TrainState` for model."""
-    params = initialized(rng, 28, model)
+    params = initialized(rng, 784, model)
     mask = jax.tree_map(lambda x: x.ndim != 1, params)
 
     tx = optax.adamw(

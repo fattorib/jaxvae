@@ -7,5 +7,5 @@ training:
   epochs: 100
   workers: 4
   weight_decay: 0.0000
-  gradient_accumulation_steps: 8
+  gradient_accumulation_steps: 4
   use_schedule: True
