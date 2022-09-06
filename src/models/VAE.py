@@ -96,10 +96,13 @@ class VAE(nn.Module):
     def __call__(self, x, rng_key):
         z_mean, z_logvar = self.encoder(x)
 
-        # z, (mu,logvar) = reparametrize(z, rng_key)
         z, (mu,logvar) = reparametrize(z_mean, z_logvar, rng_key)
 
         return (self.decoder(z), mu,logvar)
 
     def generate(self, z):
         return nn.sigmoid(self.decoder(z))
+
+    def extract_latents(self,x):
+        z_mean, z_logvar = self.encoder(x)
+        return z_mean, z_logvar
